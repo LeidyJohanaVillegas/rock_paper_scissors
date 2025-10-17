@@ -26,3 +26,22 @@ class RockPaperScissors:
         print("2. Player vs CPU")
         print("3. CPU vs CPU (Simulation)")
         print("=" * 40)
+    
+    def get_player_choice(self, player_name):
+        """Get choice from a human player"""
+        while True:
+            print(f"\n{player_name}, choose your weapon:")
+            print("1. Rock 🪨")
+            print("2. Paper 📄")
+            print("3. Scissors ✂️")
+            
+            choice = input("Enter 1, 2, or 3: ").strip()
+            
+            if choice in ['1', '2', '3']:
+                return self.choices[int(choice) - 1]
+            else:
+                print("❌ Invalid choice! Please enter 1, 2, or 3.")
+
+    def get_cpu_choice(self):
+        """Generate random choice for CPU"""
+        return random.choice(self.choices)
