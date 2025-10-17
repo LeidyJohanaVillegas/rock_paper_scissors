@@ -56,3 +56,33 @@ class RockPaperScissors:
             print("🤝 It's a DRAW!")
             self.draws += 1
             return "draw"
+        
+        # Winning conditions
+        winning_combinations = {
+            ('rock', 'scissors'): player1_name,
+            ('scissors', 'paper'): player1_name,
+            ('paper', 'rock'): player1_name,
+            ('scissors', 'rock'): player2_name,
+            ('paper', 'scissors'): player2_name,
+            ('rock', 'paper'): player2_name
+        }
+
+        winner = winning_combinations.get((choice1, choice2))
+
+        if winner == player1_name:
+            print(f"🏆 {player1_name} WINS this round!")
+            self.score_player1 += 1
+        else:
+            print(f"🏆 {player2_name} WINS this round!")
+            self.score_player2 += 1
+        
+        return winner
+    
+    def display_scores(self, player1_name, player2_name):
+        """Display current score"""
+        print("\n" + "=" * 30)
+        print("📊 CURRENT SCORE:")
+        print(f"{player1_name}: {self.score_player1}")
+        print(f"{player2_name}: {self.score_player2}")
+        print(f"Draws: {self.draws}")
+        print("=" * 30)
