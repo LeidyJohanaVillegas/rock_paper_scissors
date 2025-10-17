@@ -4,7 +4,8 @@ import random
 class RockPaperScissors:
     def __init__(self):
         self.choices = ['rock', 'paper', 'scissors']
-        self.score = {player1:0, player2:0}
+        self.score_player1 = 0
+        self.score_player2 = 0
         self.draws = 0
 
     def clearscreen(self):
@@ -45,3 +46,13 @@ class RockPaperScissors:
     def get_cpu_choice(self):
         """Generate random choice for CPU"""
         return random.choice(self.choices)
+    
+    def determine_winner(self, choice1, choice2, player1_name, player2_name):
+        """Determine the winner of a round"""
+        print(f"\n{player1_name} chose: {choice1.upper()}")
+        print(f"{player2_name} chose: {choice2.upper()}")
+        
+        if choice1 == choice2:
+            print("🤝 It's a DRAW!")
+            self.draws += 1
+            return "draw"
