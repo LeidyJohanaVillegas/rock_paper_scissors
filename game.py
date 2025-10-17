@@ -147,3 +147,20 @@ class RockPaperScissors:
                         break
         
         self.display_final_results(player1_name, player2_name)
+
+    def display_final_results(self, player1_name, player2_name):
+        """Display final results and winner"""
+        print("\n" + "=" * 40)
+        print("🏆 FINAL RESULTS:")
+        print("=" * 40)
+        print(f"{player1_name}: {self.score_player1} wins")
+        print(f"{player2_name}: {self.score_player2} wins")
+        print(f"Draws: {self.draws}")
+        
+        if self.score_player1 > self.score_player2:
+            print(f"🎊 {player1_name} is the CHAMPION! 🎊")
+        elif self.score_player2 > self.score_player1:
+            print(f"🎊 {player2_name} is the CHAMPION! 🎊")
+        else:
+            print("🏅 The game ended in a TIE!")
+        print("=" * 40)
