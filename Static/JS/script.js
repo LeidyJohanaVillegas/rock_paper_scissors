@@ -34,7 +34,8 @@ function showScreen(screenId) {
 
 function showMainMenu() {
     showScreen('main-menu');
-    apiCall('reset_game');
+    // send an empty object so apiCall uses POST (server expects POST for /api/reset_game)
+    apiCall('reset_game', {});
     currentPlayer = 1;
 }
 
