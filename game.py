@@ -110,3 +110,40 @@ class RockPaperScissors:
         print("Watching AI battle...")
         
         self.play_game_loop(cpu1_name, cpu2_name, "cpu", "cpu")
+
+    def play_game_loop(self, player1_name, player2_name, type1, type2):
+        """Main game loop for any mode"""
+        rounds = 0
+        max_rounds = 5  # You can change this
+        
+        while rounds < max_rounds:
+            rounds += 1
+            print(f"\n--- Round {rounds} ---")
+            
+            # Get choices based on player types
+            if type1 == "human":
+                choice1 = self.get_player_choice(player1_name)
+            else:
+                choice1 = self.get_cpu_choice()
+                print(f"{player1_name} is choosing...")
+            
+            if type2 == "human":
+                choice2 = self.get_player_choice(player2_name)
+            else:
+                choice2 = self.get_cpu_choice()
+                print(f"{player2_name} is choosing...")
+            
+            # Determine winner
+            self.determine_winner(choice1, choice2, player1_name, player2_name)
+            
+            # Display current score
+            self.display_score(player1_name, player2_name)
+            
+            # Ask to continue if not CPU vs CPU
+            if type1 == "human" or type2 == "human":
+                if rounds < max_rounds:
+                    continue_game = input("\nContinue to next round? (y/n): ").lower()
+                    if continue_game != 'y':
+                        break
+        
+        self.display_final_results(player1_name, player2_name)
