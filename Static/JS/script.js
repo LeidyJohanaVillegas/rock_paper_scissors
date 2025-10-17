@@ -34,7 +34,7 @@ function showScreen(screenId) {
 
 function showMainMenu() {
     showScreen('main-menu');
-    // send an empty object so apiCall uses POST (server expects POST for /api/reset_game)
+    // Ensure server route expects POST — send an empty object so apiCall uses POST
     apiCall('reset_game', {});
     currentPlayer = 1;
 }
@@ -176,6 +176,9 @@ async function makeChoice(choice, playerNumber) {
             updateChoiceDisplay(playerNumber, choice, true); // true = hide actual choice
             disablePlayerButtons(playerNumber);
             
+            // Start polling for state updates
+            updateGameStateFromServer();
+            
             // Switch to next player if it's PvP
             if (currentGameState.game_mode === 'player_vs_player') {
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
@@ -192,6 +195,33 @@ async function makeChoice(choice, playerNumber) {
             // Reset for next round
             currentPlayer = 1;
         }
+    }
+}
+
+function updateGameStateFromServer() {
+    // Periodically check game state from server (optional)
+    if (currentGameState && currentGameState.game_active && !currentGameState.both_choices_made) {
+        setTimeout(async () => {
+            const result = await apiCall('get_game_state');
+            if (!result.error && result.game_mode === currentGameState.game_mode) {
+                // Only update if the game mode is the same
+                const previousState = JSON.stringify(currentGameState);
+                const newState = JSON.stringify(result);
+                
+                if (previousState !== newState) {
+                    currentGameState = result;
+                    updateGameDisplay();
+                    
+                    // Auto-play for CPU
+                    if (!currentGameState.player1.is_human && !currentGameState.player1.choice_made) {
+                        setTimeout(() => makeChoice('', 1), 500);
+                    }
+                    if (!currentGameState.player2.is_human && !currentGameState.player2.choice_made) {
+                        setTimeout(() => makeChoice('', 2), 1000);
+                    }
+                }
+            }
+        }, 1000);
     }
 }
 
@@ -308,24 +338,32 @@ function updatePlayerInterfaces() {
 
 function updateChoiceDisplay(playerNumber, choice, hideActualChoice = true) {
     const display = document.getElementById(`player${playerNumber}-choice`);
+    const playerState = currentGameState['player' + playerNumber];
     
-    if (hideActualChoice && !currentGameState.both_choices_made) {
-        // Show ready status instead of actual choice
-        const emojis = { '✅ Ready!': '✅', '❓ Waiting...': '❓' };
-        const displayText = typeof choice === 'string' ? choice : '❓ Waiting...';
+    if (!currentGameState.both_choices_made && hideActualChoice) {
+        // Show ready/waiting status instead of actual choice
+        const status = playerState.choice_display; // 'waiting' or 'ready'
+        const emoji = playerState.choice_emoji; // '❓' or '✅'
+        const text = playerState.choice_text; // 'Waiting...' or 'Ready!'
+        
+        // Update CSS classes for styling
+        display.className = `choice-display ${status}`;
         
         display.innerHTML = `
-            <div class="choice-emoji">${emojis[displayText] || '❓'}</div>
-            <div class="choice-text">${displayText}</div>
+            <div class="choice-emoji">${emoji}</div>
+            <div class="choice-text">${text}</div>
         `;
     } else {
-        // Show actual choice
-        const emojis = { rock: '🪨', paper: '📄', scissors: '✂️' };
-        const names = { rock: 'ROCK', paper: 'PAPER', scissors: 'SCISSORS' };
+        // Show actual choice - both players have chosen
+        const emoji = playerState.choice_emoji;
+        const text = playerState.choice_text;
+        
+        // Update CSS classes for styling
+        display.className = 'choice-display revealed';
         
         display.innerHTML = `
-            <div class="choice-emoji">${emojis[choice] || '❓'}</div>
-            <div class="choice-text">${names[choice] || choice}</div>
+            <div class="choice-emoji">${emoji}</div>
+            <div class="choice-text">${text}</div>
         `;
     }
 }
@@ -394,7 +432,7 @@ function endGame() {
     }
 }
 
-// Records Functions (mantener igual que antes)
+// Records Functions
 async function showRecords() {
     const records = await apiCall('get_records');
     if (!records.error) {
@@ -404,11 +442,89 @@ async function showRecords() {
 }
 
 function displayRecords(records) {
-    // ... (mantener el código de records igual)
+    // Display PvP records
+    const pvpList = document.getElementById('pvp-records-list');
+    if (records.player_vs_player.length > 0) {
+        pvpList.innerHTML = records.player_vs_player.map(record => `
+            <div class="record-item">
+                <strong>${record.match}</strong><br>
+                Winner: ${record.winner}<br>
+                <small>${new Date(record.date).toLocaleDateString()}</small>
+            </div>
+        `).join('');
+    } else {
+        pvpList.innerHTML = '<p>No player vs player records yet.</p>';
+    }
+    
+    // Display tournament records
+    const tournamentList = document.getElementById('tournament-records-list');
+    if (records.tournament_winners.length > 0) {
+        tournamentList.innerHTML = records.tournament_winners.map(record => `
+            <div class="record-item">
+                <strong>${record.champion}</strong><br>
+                <small>${new Date(record.date).toLocaleDateString()}</small>
+            </div>
+        `).join('');
+    } else {
+        tournamentList.innerHTML = '<p>No tournament records yet.</p>';
+    }
+    
+    // Display statistics
+    const statsContent = document.getElementById('stats-content');
+    if (currentGameState && currentGameState.player_history.length > 0) {
+        const history = currentGameState.player_history;
+        const total = history.length;
+        const rockCount = history.filter(c => c === 'rock').length;
+        const paperCount = history.filter(c => c === 'paper').length;
+        const scissorsCount = history.filter(c => c === 'scissors').length;
+        
+        const mostCommon = [...new Set(history)].reduce((a, b) => 
+            history.filter(v => v === a).length > history.filter(v => v === b).length ? a : b
+        );
+        
+        statsContent.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h4>Total Moves</h4>
+                    <span class="stat-number">${total}</span>
+                </div>
+                <div class="stat-item">
+                    <h4>Rock</h4>
+                    <span class="stat-number">${rockCount} (${((rockCount/total)*100).toFixed(1)}%)</span>
+                </div>
+                <div class="stat-item">
+                    <h4>Paper</h4>
+                    <span class="stat-number">${paperCount} (${((paperCount/total)*100).toFixed(1)}%)</span>
+                </div>
+                <div class="stat-item">
+                    <h4>Scissors</h4>
+                    <span class="stat-number">${scissorsCount} (${((scissorsCount/total)*100).toFixed(1)}%)</span>
+                </div>
+                <div class="stat-item favorite-move">
+                    <h4>Favorite Move</h4>
+                    <span class="stat-number">${mostCommon.toUpperCase()}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        statsContent.innerHTML = '<p>No game statistics yet. Play some games first!</p>';
+    }
 }
 
 function showTab(tabId) {
-    // ... (mantener el código de tabs igual)
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabId).classList.add('active');
+    event.target.classList.add('active');
 }
 
 // Initialize the game

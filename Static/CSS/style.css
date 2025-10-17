@@ -506,25 +506,83 @@ body {
     box-shadow: none !important;
 }
 
-.player-area.waiting {
-    opacity: 0.7;
-}
-
-.player-area.active {
-    border: 2px solid #4ECDC4;
-    box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+/* ENHANCED STYLES FOR PRIVACY FEATURE */
+.choice-display.waiting {
+    background: rgba(158, 158, 158, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+    border: 2px solid rgba(158, 158, 158, 0.5);
 }
 
 .choice-display.ready {
     background: rgba(76, 175, 80, 0.2);
     border-radius: 10px;
     padding: 10px;
+    border: 2px solid rgba(76, 175, 80, 0.5);
+    animation: pulse-glow 1.5s infinite;
 }
 
-.choice-display.waiting {
-    background: rgba(158, 158, 158, 0.2);
+.choice-display.revealed {
+    background: rgba(33, 150, 243, 0.2);
     border-radius: 10px;
     padding: 10px;
+    border: 2px solid rgba(33, 150, 243, 0.5);
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+}
+
+.player-area.waiting {
+    opacity: 0.7;
+    transform: scale(0.95);
+    transition: all 0.3s ease;
+}
+
+.player-area.active {
+    border: 3px solid #4ECDC4;
+    box-shadow: 0 0 25px rgba(78, 205, 196, 0.4);
+    transform: scale(1.02);
+    transition: all 0.3s ease;
+}
+
+.player-area.active h3 {
+    color: #4ECDC4;
+    text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+}
+
+/* Enhanced turn message */
+.turn-message {
+    background: linear-gradient(45deg, #4ECDC4, #44A08D);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    animation: pulse 2s infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Status indicators */
+.status-waiting {
+    color: #9E9E9E;
+}
+
+.status-ready {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.status-revealed {
+    color: #2196F3;
+    font-weight: bold;
 }
 
 /* Utility Classes */

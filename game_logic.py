@@ -182,19 +182,37 @@ class RockPaperScissors:
         
         # If both choices aren't made, hide the actual choices from players
         if not safe_state['both_choices_made']:
+            # For player 1 - only show if they've made a choice
             if safe_state['player1']['choice_made']:
-                safe_state['player1']['choice_display'] = '✅ Ready!'
+                safe_state['player1']['choice_display'] = 'ready'
+                safe_state['player1']['choice_emoji'] = '✅'
+                safe_state['player1']['choice_text'] = 'Ready!'
             else:
-                safe_state['player1']['choice_display'] = '❓ Waiting...'
+                safe_state['player1']['choice_display'] = 'waiting'
+                safe_state['player1']['choice_emoji'] = '❓'
+                safe_state['player1']['choice_text'] = 'Waiting...'
             
+            # For player 2 - only show if they've made a choice
             if safe_state['player2']['choice_made']:
-                safe_state['player2']['choice_display'] = '✅ Ready!'
+                safe_state['player2']['choice_display'] = 'ready'
+                safe_state['player2']['choice_emoji'] = '✅'
+                safe_state['player2']['choice_text'] = 'Ready!'
             else:
-                safe_state['player2']['choice_display'] = '❓ Waiting...'
+                safe_state['player2']['choice_display'] = 'waiting'
+                safe_state['player2']['choice_emoji'] = '❓'
+                safe_state['player2']['choice_text'] = 'Waiting...'
         else:
             # When both are ready, show the actual choices
-            safe_state['player1']['choice_display'] = safe_state['player1']['choice']
-            safe_state['player2']['choice_display'] = safe_state['player2']['choice']
+            emojis = {'rock': '🪨', 'paper': '📄', 'scissors': '✂️'}
+            names = {'rock': 'ROCK', 'paper': 'PAPER', 'scissors': 'SCISSORS'}
+            
+            safe_state['player1']['choice_display'] = 'revealed'
+            safe_state['player1']['choice_emoji'] = emojis.get(safe_state['player1']['choice'], '❓')
+            safe_state['player1']['choice_text'] = names.get(safe_state['player1']['choice'], 'UNKNOWN')
+            
+            safe_state['player2']['choice_display'] = 'revealed'
+            safe_state['player2']['choice_emoji'] = emojis.get(safe_state['player2']['choice'], '❓')
+            safe_state['player2']['choice_text'] = names.get(safe_state['player2']['choice'], 'UNKNOWN')
         
         return safe_state
     
