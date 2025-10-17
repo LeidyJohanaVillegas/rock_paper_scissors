@@ -1,19 +1,19 @@
-import os
 import random
+import os
 
 class RockPaperScissors:
     def __init__(self):
-        self.choices = ['rock', 'paper', 'scissors']
+        self.choices = ["rock", "paper", "scissors"]
         self.score_player1 = 0
         self.score_player2 = 0
         self.draws = 0
-
-    def clearscreen(self):
-        """Clears the console screen."""
+    
+    def clear_screen(self):
+        """Clear the terminal screen"""
         os.system('cls' if os.name == 'nt' else 'clear')
-
+    
     def display_welcome(self):
-        """Display the welcome message and game rules."""
+        """Display welcome message and game rules"""
         print("🎮 Welcome to Rock, Paper, Scissors!")
         print("=" * 40)
         print("Game Rules:")
@@ -42,7 +42,7 @@ class RockPaperScissors:
                 return self.choices[int(choice) - 1]
             else:
                 print("❌ Invalid choice! Please enter 1, 2, or 3.")
-
+    
     def get_cpu_choice(self):
         """Generate random choice for CPU"""
         return random.choice(self.choices)
@@ -66,19 +66,19 @@ class RockPaperScissors:
             ('paper', 'scissors'): player2_name,
             ('rock', 'paper'): player2_name
         }
-
+        
         winner = winning_combinations.get((choice1, choice2))
-
+        
         if winner == player1_name:
-            print(f"🏆 {player1_name} WINS this round!")
+            print(f"🎉 {player1_name} WINS this round!")
             self.score_player1 += 1
         else:
-            print(f"🏆 {player2_name} WINS this round!")
+            print(f"🎉 {player2_name} WINS this round!")
             self.score_player2 += 1
         
         return winner
     
-    def display_scores(self, player1_name, player2_name):
+    def display_score(self, player1_name, player2_name):
         """Display current score"""
         print("\n" + "=" * 30)
         print("📊 CURRENT SCORE:")
@@ -86,14 +86,14 @@ class RockPaperScissors:
         print(f"{player2_name}: {self.score_player2}")
         print(f"Draws: {self.draws}")
         print("=" * 30)
-
+    
     def player_vs_player(self):
         """Mode: Player 1 vs Player 2"""
         player1_name = input("\nEnter Player 1 name: ").strip() or "Player 1"
         player2_name = input("Enter Player 2 name: ").strip() or "Player 2"
         
         self.play_game_loop(player1_name, player2_name, "human", "human")
-
+    
     def player_vs_cpu(self):
         """Mode: Player vs CPU"""
         player_name = input("\nEnter your name: ").strip() or "Player"
@@ -110,7 +110,7 @@ class RockPaperScissors:
         print("Watching AI battle...")
         
         self.play_game_loop(cpu1_name, cpu2_name, "cpu", "cpu")
-
+    
     def play_game_loop(self, player1_name, player2_name, type1, type2):
         """Main game loop for any mode"""
         rounds = 0
@@ -147,7 +147,7 @@ class RockPaperScissors:
                         break
         
         self.display_final_results(player1_name, player2_name)
-
+    
     def display_final_results(self, player1_name, player2_name):
         """Display final results and winner"""
         print("\n" + "=" * 40)
@@ -164,3 +164,55 @@ class RockPaperScissors:
         else:
             print("🏅 The game ended in a TIE!")
         print("=" * 40)
+    
+    def reset_scores(self):
+        """Reset all scores for a new game"""
+        self.score_player1 = 0
+        self.score_player2 = 0
+        self.draws = 0
+    
+    def main_menu(self):
+        """Main menu to select game mode"""
+        while True:
+            self.clear_screen()
+            self.display_welcome()
+            
+            try:
+                choice = input("\nSelect game mode (1-3) or 'q' to quit: ").strip()
+                
+                if choice == 'q':
+                    print("Thanks for playing! Goodbye! 👋")
+                    break
+                elif choice == '1':
+                    self.clear_screen()
+                    print("🎮 Player vs Player Mode")
+                    self.player_vs_player()
+                elif choice == '2':
+                    self.clear_screen()
+                    print("🎮 Player vs CPU Mode")
+                    self.player_vs_cpu()
+                elif choice == '3':
+                    self.clear_screen()
+                    print("🎮 CPU vs CPU Mode")
+                    self.cpu_vs_cpu()
+                else:
+                    print("❌ Invalid choice! Please try again.")
+                    input("Press Enter to continue...")
+                    continue
+                
+                # Ask to play again
+                play_again = input("\nWould you like to play again? (y/n): ").lower()
+                if play_again == 'y':
+                    self.reset_scores()
+                else:
+                    print("Thanks for playing! Goodbye! 👋")
+                    break
+                    
+            except KeyboardInterrupt:
+                print("\n\nGame interrupted. Thanks for playing! 👋")
+                break
+
+# Start the game
+if __name__ == "__main__":
+    game = RockPaperScissors()
+    game.main_menu()
