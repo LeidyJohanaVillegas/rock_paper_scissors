@@ -64,35 +64,35 @@ function showSetup(mode) {
 function getSetupForm(mode) {
     const forms = {
         'player_vs_player': `
-            <div class="form-group">
-                <label for="player1-name">Player 1 Name:</label>
-                <input type="text" id="player1-name" value="Player 1">
-            </div>
-            <div class="form-group">
-                <label for="player2-name">Player 2 Name:</label>
-                <input type="text" id="player2-name" value="Player 2">
-            </div>
-            <div class="form-group">
-                <label for="max-rounds">Number of Rounds:</label>
-                <select id="max-rounds">
-                    <option value="3">3 Rounds</option>
-                    <option value="5" selected>5 Rounds</option>
-                    <option value="7">7 Rounds</option>
-                    <option value="10">10 Rounds</option>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label for="setup-player1-name">Player 1 Name:</label>
+                    <input type="text" id="setup-player1-name" value="Player 1">
+                </div>
+                <div class="form-group">
+                    <label for="setup-player2-name">Player 2 Name:</label>
+                    <input type="text" id="setup-player2-name" value="Player 2">
+                </div>
+                <div class="form-group">
+                    <label for="setup-max-rounds">Number of Rounds:</label>
+                    <select id="setup-max-rounds">
+                        <option value="3">3 Rounds</option>
+                        <option value="5" selected>5 Rounds</option>
+                        <option value="7">7 Rounds</option>
+                        <option value="10">10 Rounds</option>
+                    </select>
+                </div>
             <div class="privacy-notice">
                 <p>🔒 <strong>Privacy Feature:</strong> Players won't see each other's choices until both have selected!</p>
             </div>
         `,
         'player_vs_cpu_easy': `
             <div class="form-group">
-                <label for="player1-name">Your Name:</label>
-                <input type="text" id="player1-name" value="Player">
+                <label for="setup-player1-name">Your Name:</label>
+                <input type="text" id="setup-player1-name" value="Player">
             </div>
             <div class="form-group">
-                <label for="max-rounds">Number of Rounds:</label>
-                <select id="max-rounds">
+                <label for="setup-max-rounds">Number of Rounds:</label>
+                <select id="setup-max-rounds">
                     <option value="3">3 Rounds</option>
                     <option value="5" selected>5 Rounds</option>
                     <option value="7">7 Rounds</option>
@@ -101,12 +101,12 @@ function getSetupForm(mode) {
         `,
         'player_vs_cpu_hard': `
             <div class="form-group">
-                <label for="player1-name">Your Name:</label>
-                <input type="text" id="player1-name" value="Player">
+                <label for="setup-player1-name">Your Name:</label>
+                <input type="text" id="setup-player1-name" value="Player">
             </div>
             <div class="form-group">
-                <label for="max-rounds">Number of Rounds:</label>
-                <select id="max-rounds">
+                <label for="setup-max-rounds">Number of Rounds:</label>
+                <select id="setup-max-rounds">
                     <option value="3">3 Rounds</option>
                     <option value="5" selected>5 Rounds</option>
                     <option value="7">7 Rounds</option>
@@ -118,8 +118,8 @@ function getSetupForm(mode) {
         `,
         'cpu_vs_cpu': `
             <div class="form-group">
-                <label for="max-rounds">Number of Rounds:</label>
-                <select id="max-rounds">
+                <label for="setup-max-rounds">Number of Rounds:</label>
+                <select id="setup-max-rounds">
                     <option value="5">5 Rounds</option>
                     <option value="10" selected>10 Rounds</option>
                     <option value="15">15 Rounds</option>
@@ -134,9 +134,10 @@ function getSetupForm(mode) {
 
 // Game Functions
 async function startGame(gameMode) {
-    const player1Name = document.getElementById('player1-name')?.value || 'Player 1';
-    const player2Name = document.getElementById('player2-name')?.value || 'CPU';
-    const maxRounds = parseInt(document.getElementById('max-rounds').value);
+    // Read from setup form inputs (different ids to avoid collision with game display ids)
+    const player1Name = document.getElementById('setup-player1-name')?.value || 'Player 1';
+    const player2Name = document.getElementById('setup-player2-name')?.value || 'CPU';
+    const maxRounds = parseInt(document.getElementById('setup-max-rounds').value);
     
     const result = await apiCall('start_game', {
         game_mode: gameMode,
@@ -182,6 +183,8 @@ async function makeChoice(choice, playerNumber) {
             // Switch to next player if it's PvP
             if (currentGameState.game_mode === 'player_vs_player') {
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
+                // Update interfaces so buttons enable/disable according to the new currentPlayer
+                updatePlayerInterfaces();
                 showPlayerTurnMessage();
             }
             

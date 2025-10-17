@@ -1,5 +1,16 @@
 {
-  "player_vs_player": {},
-  "player_vs_cpu": {},
+  "player_vs_player": [
+    {
+      "match": "Alice vs Bob",
+      "winner": "Bob",
+      "date": "2025-10-17T17:59:59.355168"
+    },
+    {
+      "match": "Player 1 vs Player 2",
+      "winner": "Player 2",
+      "date": "2025-10-17T18:02:20.725084"
+    }
+  ],
+  "player_vs_cpu": [],
   "tournament_winners": []
 }

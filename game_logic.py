@@ -26,6 +26,11 @@ class RockPaperScissors:
         try:
             with open(self.records_file, 'r') as f:
                 self.records = json.load(f)
+            # Validate structure: ensure lists for each record category
+            for key in ["player_vs_player", "player_vs_cpu", "tournament_winners"]:
+                if key not in self.records or not isinstance(self.records[key], list):
+                    # If the file has a non-list (e.g. {}), coerce to empty list
+                    self.records[key] = []
         except FileNotFoundError:
             self.records = {
                 "player_vs_player": [],
@@ -179,7 +184,7 @@ class RockPaperScissors:
     def get_game_state(self):
         # Return a safe version of game state that hides opponent's choice
         safe_state = self.game_state.copy()
-        
+
         # If both choices aren't made, hide the actual choices from players
         if not safe_state['both_choices_made']:
             # For player 1 - only show if they've made a choice
@@ -191,7 +196,7 @@ class RockPaperScissors:
                 safe_state['player1']['choice_display'] = 'waiting'
                 safe_state['player1']['choice_emoji'] = '❓'
                 safe_state['player1']['choice_text'] = 'Waiting...'
-            
+
             # For player 2 - only show if they've made a choice
             if safe_state['player2']['choice_made']:
                 safe_state['player2']['choice_display'] = 'ready'
@@ -205,21 +210,24 @@ class RockPaperScissors:
             # When both are ready, show the actual choices
             emojis = {'rock': '🪨', 'paper': '📄', 'scissors': '✂️'}
             names = {'rock': 'ROCK', 'paper': 'PAPER', 'scissors': 'SCISSORS'}
-            
+
             safe_state['player1']['choice_display'] = 'revealed'
             safe_state['player1']['choice_emoji'] = emojis.get(safe_state['player1']['choice'], '❓')
             safe_state['player1']['choice_text'] = names.get(safe_state['player1']['choice'], 'UNKNOWN')
-            
+
             safe_state['player2']['choice_display'] = 'revealed'
             safe_state['player2']['choice_emoji'] = emojis.get(safe_state['player2']['choice'], '❓')
             safe_state['player2']['choice_text'] = names.get(safe_state['player2']['choice'], 'UNKNOWN')
-        
+
         return safe_state
     
     def get_records(self):
         return self.records
     
     def save_record(self, record_type, data):
-        if record_type in self.records:
-            self.records[record_type].append(data)
-            self.save_records()
+        # Be defensive: if the record_type is missing or not a list (file corruption), coerce it
+        if record_type not in self.records or not isinstance(self.records.get(record_type), list):
+            self.records[record_type] = []
+
+        self.records[record_type].append(data)
+        self.save_records()
