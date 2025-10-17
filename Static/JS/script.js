@@ -58,6 +58,13 @@ function showSetup(mode) {
         </div>
     `;
     
+    // If user previously selected rounds, preselect that value
+    const savedRounds = localStorage.getItem('rps_max_rounds');
+    if (savedRounds) {
+        const select = document.getElementById('setup-max-rounds');
+        if (select) select.value = savedRounds;
+    }
+
     showScreen('setup-screen');
 }
 
@@ -76,7 +83,7 @@ function getSetupForm(mode) {
                     <label for="setup-max-rounds">Number of Rounds:</label>
                     <select id="setup-max-rounds">
                         <option value="3">3 Rounds</option>
-                        <option value="5" selected>5 Rounds</option>
+                        <option value="5">5 Rounds</option>
                         <option value="7">7 Rounds</option>
                         <option value="10">10 Rounds</option>
                     </select>
@@ -94,8 +101,9 @@ function getSetupForm(mode) {
                 <label for="setup-max-rounds">Number of Rounds:</label>
                 <select id="setup-max-rounds">
                     <option value="3">3 Rounds</option>
-                    <option value="5" selected>5 Rounds</option>
+                    <option value="5">5 Rounds</option>
                     <option value="7">7 Rounds</option>
+                    <option value="10">10 Rounds</option>
                 </select>
             </div>
         `,
@@ -108,8 +116,9 @@ function getSetupForm(mode) {
                 <label for="setup-max-rounds">Number of Rounds:</label>
                 <select id="setup-max-rounds">
                     <option value="3">3 Rounds</option>
-                    <option value="5" selected>5 Rounds</option>
+                    <option value="5">5 Rounds</option>
                     <option value="7">7 Rounds</option>
+                    <option value="10">10 Rounds</option>
                 </select>
             </div>
             <p style="color: #FFA726; text-align: center; margin: 15px 0;">
@@ -120,10 +129,10 @@ function getSetupForm(mode) {
             <div class="form-group">
                 <label for="setup-max-rounds">Number of Rounds:</label>
                 <select id="setup-max-rounds">
+                    <option value="3">3 Rounds</option>
                     <option value="5">5 Rounds</option>
-                    <option value="10" selected>10 Rounds</option>
-                    <option value="15">15 Rounds</option>
-                    <option value="20">20 Rounds</option>
+                    <option value="7">7 Rounds</option>
+                    <option value="10">10 Rounds</option>
                 </select>
             </div>
         `
@@ -138,6 +147,14 @@ async function startGame(gameMode) {
     const player1Name = document.getElementById('setup-player1-name')?.value || 'Player 1';
     const player2Name = document.getElementById('setup-player2-name')?.value || 'CPU';
     const maxRounds = parseInt(document.getElementById('setup-max-rounds').value);
+
+    // Persist the user's chosen rounds so next time it's preselected
+    try {
+        if (!isNaN(maxRounds)) localStorage.setItem('rps_max_rounds', String(maxRounds));
+    } catch (e) {
+        // ignore storage errors
+        console.warn('Could not save max rounds to localStorage', e);
+    }
     
     const result = await apiCall('start_game', {
         game_mode: gameMode,
@@ -221,6 +238,13 @@ function updateGameStateFromServer() {
                     }
                     if (!currentGameState.player2.is_human && !currentGameState.player2.choice_made) {
                         setTimeout(() => makeChoice('', 2), 1000);
+                    }
+                    // If server reports a pending challenge, fetch/show it
+                    if (currentGameState.challenge_pending) {
+                        // Only fetch if there's a specific player assigned
+                        if (currentGameState.challenge_for_player) {
+                            fetchAndShowChallenge();
+                        }
                     }
                 }
             }
@@ -394,6 +418,120 @@ function showRoundResult(result) {
         document.querySelector('.next-round-btn').textContent = 'View Final Results';
         document.querySelector('.next-round-btn').onclick = showFinalResults;
     }
+
+    // If server issued a challenge for the loser, fetch and show it
+    if (result.challenge_issued) {
+        // fetch challenge data from server and show UI
+        fetchAndShowChallenge(result);
+    }
+}
+
+// Challenge handling
+let currentChallengeForPlayer = null;
+let lastChallengeResponse = null;
+
+async function fetchAndShowChallenge(roundResult) {
+    const chResp = await apiCall('get_challenge');
+    if (chResp.error) return;
+    const challenge = chResp.challenge;
+    const forPlayer = chResp.for_player;
+    if (!challenge) return;
+
+    currentChallengeForPlayer = forPlayer;
+    // Show the challenge area
+    document.getElementById('challenge-area').classList.remove('hidden');
+    document.getElementById('challenge-result').classList.add('hidden');
+
+    // Indicate which player must answer
+    const instr = document.getElementById('challenge-instruction');
+    if (instr) {
+        const playerName = currentGameState ? currentGameState['player' + forPlayer].name : `Player ${forPlayer}`;
+        instr.textContent = `${playerName}, you lost this round. Complete the English Challenge to avoid giving a point to your opponent.`;
+    }
+
+    // Hide all challenge content first
+    document.getElementById('quiz-challenge').classList.add('hidden');
+    document.getElementById('word-challenge').classList.add('hidden');
+
+    if (challenge.type === 'quiz') {
+        // Show quiz UI and populate options
+        document.getElementById('quiz-challenge').classList.remove('hidden');
+        document.getElementById('quiz-question').textContent = challenge.question || '';
+        document.getElementById('option-a').textContent = challenge.options?.a || '';
+        document.getElementById('option-b').textContent = challenge.options?.b || '';
+        document.getElementById('option-c').textContent = challenge.options?.c || '';
+        document.getElementById('option-d').textContent = challenge.options?.d || '';
+    } else if (challenge.type === 'word_guess') {
+        document.getElementById('word-challenge').classList.remove('hidden');
+        document.getElementById('word-clue').textContent = challenge.clue || '';
+        document.getElementById('hint-text').textContent = challenge.hint || '';
+        document.getElementById('word-answer').value = '';
+    }
+}
+
+async function submitChallengeAnswer(letter) {
+    if (!currentChallengeForPlayer) return;
+    const resp = await apiCall('submit_challenge', { player_number: currentChallengeForPlayer, answer: letter });
+    handleChallengeResponse(resp);
+}
+
+async function submitWordChallenge() {
+    if (!currentChallengeForPlayer) return;
+    const answer = document.getElementById('word-answer').value || '';
+    const resp = await apiCall('submit_challenge', { player_number: currentChallengeForPlayer, answer: answer });
+    handleChallengeResponse(resp);
+}
+
+function handleChallengeResponse(resp) {
+    if (!resp) return;
+    if (resp.error) {
+        document.getElementById('challenge-result-title').textContent = 'Error';
+        document.getElementById('challenge-result-message').textContent = resp.error;
+        document.getElementById('challenge-result').classList.remove('hidden');
+        return;
+    }
+
+    lastChallengeResponse = resp;
+    // Show result
+    const passed = resp.passed;
+    document.getElementById('quiz-challenge').classList.add('hidden');
+    document.getElementById('word-challenge').classList.add('hidden');
+    document.getElementById('challenge-result').classList.remove('hidden');
+    if (passed) {
+        document.getElementById('challenge-result-title').textContent = '¡Bien hecho!';
+        document.getElementById('challenge-result-message').textContent = 'Has aprobado el reto y evitas que tu oponente gane el punto.';
+    } else {
+        document.getElementById('challenge-result-title').textContent = 'Fallaste :(';
+        document.getElementById('challenge-result-message').textContent = 'No acertaste el reto. El punto fue concedido al oponente.';
+    }
+
+    // Update local game state if provided
+    if (resp.game_state) {
+        currentGameState = resp.game_state;
+        updateGameDisplay();
+    }
+
+    // Clear currentChallengeForPlayer so accidental resubmissions are blocked
+    currentChallengeForPlayer = null;
+}
+
+function continueAfterChallenge() {
+    // Hide challenge area and continue
+    document.getElementById('challenge-area').classList.add('hidden');
+    document.getElementById('challenge-result').classList.add('hidden');
+    // If we have latest game state, update display
+    if (lastChallengeResponse && lastChallengeResponse.game_state) {
+        currentGameState = lastChallengeResponse.game_state;
+        updateGameDisplay();
+    } else {
+        // fallback: fetch game state
+        apiCall('get_game_state').then(res => {
+            if (!res.error) {
+                currentGameState = res;
+                updateGameDisplay();
+            }
+        });
+    }
 }
 
 function resetChoiceDisplays() {
@@ -403,14 +541,31 @@ function resetChoiceDisplays() {
 }
 
 async function nextRound() {
-    if (currentGameState && currentGameState.game_active) {
-        // Reset choice flags for new round
+    if (!currentGameState) return;
+
+    // Fetch latest server state to respect server-side round completion
+    const serverState = await apiCall('get_game_state');
+    if (serverState.error) {
+        // fallback to local reset if network issue
         currentGameState.player1.choice_made = false;
         currentGameState.player2.choice_made = false;
         currentGameState.both_choices_made = false;
-        
         updateGameDisplay();
+        return;
     }
+
+    currentGameState = serverState;
+    // If the server signalled game is no longer active or we've passed max rounds, show final
+    if (!currentGameState.game_active) {
+        showFinalResults();
+        return;
+    }
+
+    // Otherwise clear local choice flags and update UI for next round
+    currentGameState.player1.choice_made = false;
+    currentGameState.player2.choice_made = false;
+    currentGameState.both_choices_made = false;
+    updateGameDisplay();
 }
 
 function showFinalResults() {

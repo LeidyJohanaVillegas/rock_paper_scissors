@@ -21,6 +21,7 @@
                 <p>• <strong>Scissors ✂️</strong> beats <strong>Paper 📄</strong></p>
                 <p>• <strong>Paper 📄</strong> beats <strong>Rock 🪨</strong></p>
                 <p>• Same choice = <strong>Draw 🤝</strong></p>
+                <p>• <strong>Loser gets an English Challenge!</strong> 📝</p>
             </div>
 
             <div class="game-modes">
@@ -75,6 +76,11 @@
             </div>
 
             <div class="game-area">
+                <!-- Turn Message for Privacy Feature -->
+                <div id="turn-message" class="turn-message hidden">
+                    It's your turn! Make your choice.
+                </div>
+                
                 <div class="players-container">
                     <div class="player-area" id="player1-area">
                         <h3 id="player1-name">Player 1</h3>
@@ -112,6 +118,39 @@
                         <h3 id="round-result">Round Result</h3>
                         <p id="victory-message"></p>
                         <button class="next-round-btn" onclick="nextRound()">Next Round ▶️</button>
+                    </div>
+                </div>
+                
+                <!-- Challenge Area -->
+                <div id="challenge-area" class="hidden">
+                    <div class="challenge-container">
+                        <h3>📝 English Challenge!</h3>
+                        <p id="challenge-instruction">You lost this round! Answer this challenge correctly to avoid giving a point to your opponent.</p>
+                        
+                        <div id="quiz-challenge" class="challenge-content hidden">
+                            <h4 id="quiz-question">Question will appear here</h4>
+                            <div class="quiz-options">
+                                <button class="option-btn" onclick="submitChallengeAnswer('a')">A) <span id="option-a"></span></button>
+                                <button class="option-btn" onclick="submitChallengeAnswer('b')">B) <span id="option-b"></span></button>
+                                <button class="option-btn" onclick="submitChallengeAnswer('c')">C) <span id="option-c"></span></button>
+                                <button class="option-btn" onclick="submitChallengeAnswer('d')">D) <span id="option-d"></span></button>
+                            </div>
+                        </div>
+                        
+                        <div id="word-challenge" class="challenge-content hidden">
+                            <h4 id="word-clue">Clue will appear here</h4>
+                            <p id="word-hint">Hint: <span id="hint-text"></span></p>
+                            <div class="word-input-container">
+                                <input type="text" id="word-answer" placeholder="Type your answer here...">
+                                <button class="submit-word-btn" onclick="submitWordChallenge()">Submit</button>
+                            </div>
+                        </div>
+                        
+                        <div id="challenge-result" class="hidden">
+                            <h4 id="challenge-result-title"></h4>
+                            <p id="challenge-result-message"></p>
+                            <button class="next-round-btn" onclick="continueAfterChallenge()">Continue</button>
+                        </div>
                     </div>
                 </div>
             </div>

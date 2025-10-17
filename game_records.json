@@ -9,6 +9,21 @@
       "match": "Player 1 vs Player 2",
       "winner": "Player 2",
       "date": "2025-10-17T18:02:20.725084"
+    },
+    {
+      "match": "Player 1 vs Player 2",
+      "winner": "Player 2",
+      "date": "2025-10-17T18:35:38.016955"
+    },
+    {
+      "match": "Player 1 vs Player 2",
+      "winner": "Player 2",
+      "date": "2025-10-17T18:39:15.560158"
+    },
+    {
+      "match": "Johana vs Thomas",
+      "winner": "Johana",
+      "date": "2025-10-17T18:54:47.229863"
     }
   ],
   "player_vs_cpu": [],

@@ -17,7 +17,13 @@ def start_game():
     game_mode = data.get('game_mode')
     player1_name = data.get('player1_name', 'Player 1')
     player2_name = data.get('player2_name', 'CPU')
-    max_rounds = data.get('max_rounds', 5)
+    # Be defensive: ensure max_rounds is an integer
+    try:
+        max_rounds = int(data.get('max_rounds', 5))
+        if max_rounds <= 0:
+            max_rounds = 5
+    except (TypeError, ValueError):
+        max_rounds = 5
     
     result = game.start_game(game_mode, player1_name, player2_name, max_rounds)
     return jsonify(result)
@@ -34,6 +40,23 @@ def play_round():
 @app.route('/api/get_game_state', methods=['GET'])
 def get_game_state():
     return jsonify(game.get_game_state())
+
+
+@app.route('/api/get_challenge', methods=['GET'])
+def get_challenge():
+    ch = game.get_current_challenge()
+    if not ch:
+        return jsonify({'challenge': None})
+    return jsonify({'challenge': ch, 'for_player': game.challenge_for_player})
+
+
+@app.route('/api/submit_challenge', methods=['POST'])
+def submit_challenge():
+    data = request.json
+    player_number = data.get('player_number')
+    answer = data.get('answer')
+    result = game.submit_challenge_answer(player_number, answer)
+    return jsonify(result)
 
 @app.route('/api/reset_game', methods=['POST'])
 def reset_game():

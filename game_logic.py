@@ -1,6 +1,7 @@
 import random
 import json
 from datetime import datetime
+from challenges import get_random_challenge, check_challenge
 
 class RockPaperScissors:
     def __init__(self):
@@ -21,6 +22,9 @@ class RockPaperScissors:
             'game_active': False,
             'both_choices_made': False
         }
+        # Challenge state when a loser must perform an English challenge
+        self.current_challenge = None
+        self.challenge_for_player = None  # 1 or 2
     
     def load_records(self):
         try:
@@ -44,6 +48,14 @@ class RockPaperScissors:
     
     def start_game(self, game_mode, player1_name, player2_name, max_rounds):
         self.reset_game()
+        # Defensive: coerce max_rounds to int and ensure minimum of 1
+        try:
+            max_rounds = int(max_rounds)
+            if max_rounds <= 0:
+                max_rounds = 5
+        except (TypeError, ValueError):
+            max_rounds = 5
+
         self.game_state.update({
             'game_mode': game_mode,
             'player1': {'name': player1_name, 'score': 0, 'choice': None, 'is_human': True, 'choice_made': False},
@@ -178,8 +190,52 @@ class RockPaperScissors:
         self.game_state['player1']['choice_made'] = False
         self.game_state['player2']['choice_made'] = False
         self.game_state['both_choices_made'] = False
-        
+
+        # If someone lost and is human, create a challenge for the loser
+        # Determine loser
+        if result in ['player1', 'player2']:
+            loser = 'player2' if result == 'player1' else 'player1'
+            loser_num = 1 if loser == 'player1' else 2
+            # Only issue a challenge if the loser is human
+            if self.game_state[loser]['is_human']:
+                # create a challenge and attach to state
+                self.current_challenge = get_random_challenge()
+                self.challenge_for_player = loser_num
+                round_result['challenge_issued'] = True
+                # Do not end the round immediately; caller should fetch challenge
+
         return round_result
+
+    # Challenge-related methods
+    def get_current_challenge(self):
+        if not self.current_challenge:
+            return None
+        # Return challenge without exposing the correct answer when sending to clients
+        ch = self.current_challenge.copy()
+        # For server-side checking we keep the 'word' or 'correct_answer' in memory
+        # but remove it from the public payload
+        if ch.get('type') == 'quiz':
+            ch.pop('correct_answer', None)
+        elif ch.get('type') == 'word_guess':
+            ch.pop('word', None)
+        return ch
+
+    def submit_challenge_answer(self, player_number, answer):
+        # Only allow the player who was assigned the challenge to submit
+        if not self.current_challenge or self.challenge_for_player != player_number:
+            return {'error': 'No challenge for this player'}
+
+        passed = check_challenge(self.current_challenge, answer)
+        # Clear challenge state
+        self.current_challenge = None
+        self.challenge_for_player = None
+
+        if not passed:
+            # If failed, award point to opponent
+            opponent_num = 1 if player_number == 2 else 2
+            self.game_state[f'player{opponent_num}']['score'] += 1
+
+        return {'passed': passed, 'game_state': self.get_game_state()}
     
     def get_game_state(self):
         # Return a safe version of game state that hides opponent's choice
@@ -219,7 +275,12 @@ class RockPaperScissors:
             safe_state['player2']['choice_emoji'] = emojis.get(safe_state['player2']['choice'], '❓')
             safe_state['player2']['choice_text'] = names.get(safe_state['player2']['choice'], 'UNKNOWN')
 
+        # Expose minimal challenge info (no answers) so clients can react
+        safe_state['challenge_pending'] = bool(self.current_challenge)
+        safe_state['challenge_for_player'] = self.challenge_for_player
+
         return safe_state
+        
     
     def get_records(self):
         return self.records
