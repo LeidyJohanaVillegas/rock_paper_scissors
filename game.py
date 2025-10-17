@@ -86,3 +86,27 @@ class RockPaperScissors:
         print(f"{player2_name}: {self.score_player2}")
         print(f"Draws: {self.draws}")
         print("=" * 30)
+
+    def player_vs_player(self):
+        """Mode: Player 1 vs Player 2"""
+        player1_name = input("\nEnter Player 1 name: ").strip() or "Player 1"
+        player2_name = input("Enter Player 2 name: ").strip() or "Player 2"
+        
+        self.play_game_loop(player1_name, player2_name, "human", "human")
+
+    def player_vs_cpu(self):
+        """Mode: Player vs CPU"""
+        player_name = input("\nEnter your name: ").strip() or "Player"
+        cpu_name = "CPU"
+        
+        self.play_game_loop(player_name, cpu_name, "human", "cpu")
+    
+    def cpu_vs_cpu(self):
+        """Mode: CPU vs CPU (simulation)"""
+        cpu1_name = "CPU 1"
+        cpu2_name = "CPU 2"
+        
+        print(f"\n🤖 {cpu1_name} vs {cpu2_name} - Simulation Mode")
+        print("Watching AI battle...")
+        
+        self.play_game_loop(cpu1_name, cpu2_name, "cpu", "cpu")
