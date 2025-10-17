@@ -31,12 +31,14 @@ class RockPaperScissors:
     def get_player_choice(self, player_name):
         """Get choice from a human player"""
         while True:
+            self.clear_screen()
             print(f"\n{player_name}, choose your weapon:")
             print("1. Rock 🪨")
             print("2. Paper 📄")
             print("3. Scissors ✂️")
             
             choice = input("Enter 1, 2, or 3: ").strip()
+            self.clear_screen()
             
             if choice in ['1', '2', '3']:
                 return self.choices[int(choice) - 1]
@@ -80,6 +82,7 @@ class RockPaperScissors:
     
     def display_score(self, player1_name, player2_name):
         """Display current score"""
+        self.clear_screen()
         print("\n" + "=" * 30)
         print("📊 CURRENT SCORE:")
         print(f"{player1_name}: {self.score_player1}")
@@ -150,6 +153,7 @@ class RockPaperScissors:
     
     def display_final_results(self, player1_name, player2_name):
         """Display final results and winner"""
+        self.clear_screen()
         print("\n" + "=" * 40)
         print("🏆 FINAL RESULTS:")
         print("=" * 40)
