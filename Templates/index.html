@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors 🎮</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen active">
+            <div class="header">
+                <h1 class="main-title">🎮 Rock Paper Scissors</h1>
+            </div>
+            
+            <div class="rules">
+                <h3>🎯 Game Rules:</h3>
+                <p>• <strong>Rock 🪨</strong> beats <strong>Scissors ✂️</strong></p>
+                <p>• <strong>Scissors ✂️</strong> beats <strong>Paper 📄</strong></p>
+                <p>• <strong>Paper 📄</strong> beats <strong>Rock 🪨</strong></p>
+                <p>• Same choice = <strong>Draw 🤝</strong></p>
+            </div>
+
+            <div class="game-modes">
+                <h2>Select Game Mode</h2>
+                <div class="mode-grid">
+                    <div class="mode-card" onclick="showSetup('player_vs_player')">
+                        <div class="mode-icon">👥</div>
+                        <h3>Player vs Player</h3>
+                        <p>Two human players compete</p>
+                    </div>
+                    <div class="mode-card" onclick="showSetup('player_vs_cpu_easy')">
+                        <div class="mode-icon">🤖</div>
+                        <h3>Player vs CPU (Easy)</h3>
+                        <p>Play against random CPU</p>
+                    </div>
+                    <div class="mode-card" onclick="showSetup('player_vs_cpu_hard')">
+                        <div class="mode-icon">🧠</div>
+                        <h3>Player vs CPU (Hard)</h3>
+                        <p>CPU learns your patterns!</p>
+                    </div>
+                    <div class="mode-card" onclick="showSetup('cpu_vs_cpu')">
+                        <div class="mode-icon">⚡</div>
+                        <h3>CPU vs CPU</h3>
+                        <p>Watch AI battle</p>
+                    </div>
+                    <div class="mode-card" onclick="showRecords()">
+                        <div class="mode-icon">📊</div>
+                        <h3>Records & Statistics</h3>
+                        <p>View game history</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="screen">
+            <div class="header">
+                <h1 id="setup-title">Game Setup</h1>
+                <button class="back-btn" onclick="showMainMenu()">← Back</button>
+            </div>
+            <div id="setup-content"></div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <h2 id="game-title">Player 1 vs Player 2</h2>
+                <div class="round-info">
+                    <span id="round-counter">Round 1 of 5</span>
+                </div>
+                <button class="back-btn" onclick="endGame()">🏠 Menu</button>
+            </div>
+
+            <div class="game-area">
+                <div class="players-container">
+                    <div class="player-area" id="player1-area">
+                        <h3 id="player1-name">Player 1</h3>
+                        <div class="choice-display" id="player1-choice">
+                            <div class="choice-emoji">❓</div>
+                            <div class="choice-text">Waiting...</div>
+                        </div>
+                        <div class="choice-buttons" id="player1-buttons">
+                            <button class="choice-btn rock" onclick="makeChoice('rock', 1)">🪨 ROCK</button>
+                            <button class="choice-btn paper" onclick="makeChoice('paper', 1)">📄 PAPER</button>
+                            <button class="choice-btn scissors" onclick="makeChoice('scissors', 1)">✂️ SCISSORS</button>
+                        </div>
+                    </div>
+
+                    <div class="vs-section">
+                        <div class="vs-circle">VS</div>
+                    </div>
+
+                    <div class="player-area" id="player2-area">
+                        <h3 id="player2-name">Player 2</h3>
+                        <div class="choice-display" id="player2-choice">
+                            <div class="choice-emoji">❓</div>
+                            <div class="choice-text">Waiting...</div>
+                        </div>
+                        <div class="choice-buttons" id="player2-buttons">
+                            <button class="choice-btn rock" onclick="makeChoice('rock', 2)">🪨 ROCK</button>
+                            <button class="choice-btn paper" onclick="makeChoice('paper', 2)">📄 PAPER</button>
+                            <button class="choice-btn scissors" onclick="makeChoice('scissors', 2)">✂️ SCISSORS</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="result-area" class="hidden">
+                    <div class="result-display">
+                        <h3 id="round-result">Round Result</h3>
+                        <p id="victory-message"></p>
+                        <button class="next-round-btn" onclick="nextRound()">Next Round ▶️</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scoreboard">
+                <div class="score-item">
+                    <span id="score-player1">0</span>
+                    <span id="score-player1-name">Player 1</span>
+                </div>
+                <div class="score-item draws">
+                    <span id="score-draws">0</span>
+                    <span>Draws</span>
+                </div>
+                <div class="score-item">
+                    <span id="score-player2">0</span>
+                    <span id="score-player2-name">Player 2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Records Screen -->
+        <div id="records-screen" class="screen">
+            <div class="header">
+                <h1>📊 Records & Statistics</h1>
+                <button class="back-btn" onclick="showMainMenu()">← Back</button>
+            </div>
+            <div class="records-content">
+                <div class="records-tabs">
+                    <button class="tab-btn active" onclick="showTab('pvp-records')">Player vs Player</button>
+                    <button class="tab-btn" onclick="showTab('tournament-records')">Tournament</button>
+                    <button class="tab-btn" onclick="showTab('stats')">Statistics</button>
+                </div>
+                
+                <div id="pvp-records" class="tab-content active">
+                    <h3>🏆 Player vs Player Records</h3>
+                    <div id="pvp-records-list" class="records-list"></div>
+                </div>
+                
+                <div id="tournament-records" class="tab-content">
+                    <h3>🏅 Tournament Champions</h3>
+                    <div id="tournament-records-list" class="records-list"></div>
+                </div>
+                
+                <div id="stats" class="tab-content">
+                    <h3>📈 Your Statistics</h3>
+                    <div id="stats-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
