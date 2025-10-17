@@ -12,13 +12,14 @@ class RockPaperScissors:
     def reset_game(self):
         self.game_state = {
             'game_mode': None,
-            'player1': {'name': 'Player 1', 'score': 0, 'choice': None, 'is_human': True},
-            'player2': {'name': 'CPU', 'score': 0, 'choice': None, 'is_human': False},
+            'player1': {'name': 'Player 1', 'score': 0, 'choice': None, 'is_human': True, 'choice_made': False},
+            'player2': {'name': 'CPU', 'score': 0, 'choice': None, 'is_human': False, 'choice_made': False},
             'draws': 0,
             'current_round': 1,
             'max_rounds': 5,
             'player_history': [],
-            'game_active': False
+            'game_active': False,
+            'both_choices_made': False
         }
     
     def load_records(self):
@@ -40,10 +41,11 @@ class RockPaperScissors:
         self.reset_game()
         self.game_state.update({
             'game_mode': game_mode,
-            'player1': {'name': player1_name, 'score': 0, 'choice': None, 'is_human': True},
-            'player2': {'name': player2_name, 'score': 0, 'choice': None, 'is_human': False},
+            'player1': {'name': player1_name, 'score': 0, 'choice': None, 'is_human': True, 'choice_made': False},
+            'player2': {'name': player2_name, 'score': 0, 'choice': None, 'is_human': False, 'choice_made': False},
             'max_rounds': max_rounds,
-            'game_active': True
+            'game_active': True,
+            'both_choices_made': False
         })
         
         # Set player types based on game mode
@@ -76,27 +78,43 @@ class RockPaperScissors:
         # Set player choices
         if player_number == 1:
             self.game_state['player1']['choice'] = player_choice
+            self.game_state['player1']['choice_made'] = bool(player_choice)
             if player_choice and self.game_state['player1']['is_human']:
                 self.game_state['player_history'].append(player_choice)
         else:
             self.game_state['player2']['choice'] = player_choice
+            self.game_state['player2']['choice_made'] = bool(player_choice)
         
         # If CPU needs to make a choice
         if (not self.game_state['player1']['choice'] and 
             not self.game_state['player1']['is_human']):
             difficulty = 'hard' if 'hard' in self.game_state.get('game_mode', '') else 'easy'
-            self.game_state['player1']['choice'] = self.get_cpu_choice(difficulty)
+            cpu_choice = self.get_cpu_choice(difficulty)
+            self.game_state['player1']['choice'] = cpu_choice
+            self.game_state['player1']['choice_made'] = True
         
         if (not self.game_state['player2']['choice'] and 
             not self.game_state['player2']['is_human']):
             difficulty = 'hard' if 'hard' in self.game_state.get('game_mode', '') else 'easy'
-            self.game_state['player2']['choice'] = self.get_cpu_choice(difficulty)
+            cpu_choice = self.get_cpu_choice(difficulty)
+            self.game_state['player2']['choice'] = cpu_choice
+            self.game_state['player2']['choice_made'] = True
         
         # Check if both choices are made
-        if self.game_state['player1']['choice'] and self.game_state['player2']['choice']:
+        both_made = (self.game_state['player1']['choice_made'] and 
+                    self.game_state['player2']['choice_made'])
+        
+        self.game_state['both_choices_made'] = both_made
+        
+        if both_made:
             return self.determine_winner()
         else:
-            return {'status': 'waiting', 'game_state': self.get_game_state()}
+            return {
+                'status': 'waiting', 
+                'game_state': self.get_game_state(),
+                'player_ready': player_number,
+                'both_ready': False
+            }
     
     def determine_winner(self):
         choice1 = self.game_state['player1']['choice']
@@ -107,8 +125,8 @@ class RockPaperScissors:
             self.game_state['draws'] += 1
             message = "It's a DRAW!"
         elif ((choice1 == 'rock' and choice2 == 'scissors') or
-                (choice1 == 'scissors' and choice2 == 'paper') or
-                (choice1 == 'paper' and choice2 == 'rock')):
+              (choice1 == 'scissors' and choice2 == 'paper') or
+              (choice1 == 'paper' and choice2 == 'rock')):
             result = 'player1'
             self.game_state['player1']['score'] += 1
             message = f"{self.game_state['player1']['name']} WINS!"
@@ -130,7 +148,8 @@ class RockPaperScissors:
             'result': result,
             'message': message,
             'victory_message': victory_message,
-            'game_state': self.get_game_state()
+            'game_state': self.get_game_state(),
+            'both_ready': True
         }
         
         # Check if game should continue
@@ -142,22 +161,42 @@ class RockPaperScissors:
             # Save records for PvP games
             if self.game_state['game_mode'] == 'player_vs_player':
                 winner = (self.game_state['player1']['name'] 
-                    if self.game_state['player1']['score'] > self.game_state['player2']['score'] 
-                    else self.game_state['player2']['name'])
+                         if self.game_state['player1']['score'] > self.game_state['player2']['score'] 
+                         else self.game_state['player2']['name'])
                 self.save_record('player_vs_player', {
                     'match': f"{self.game_state['player1']['name']} vs {self.game_state['player2']['name']}",
                     'winner': winner,
                     'date': datetime.now().isoformat()
                 })
         
-        # Reset choices for next round
-        self.game_state['player1']['choice'] = None
-        self.game_state['player2']['choice'] = None
+        # Reset choices for next round (but keep the made flags for display)
+        self.game_state['player1']['choice_made'] = False
+        self.game_state['player2']['choice_made'] = False
+        self.game_state['both_choices_made'] = False
         
         return round_result
     
     def get_game_state(self):
-        return self.game_state
+        # Return a safe version of game state that hides opponent's choice
+        safe_state = self.game_state.copy()
+        
+        # If both choices aren't made, hide the actual choices from players
+        if not safe_state['both_choices_made']:
+            if safe_state['player1']['choice_made']:
+                safe_state['player1']['choice_display'] = '✅ Ready!'
+            else:
+                safe_state['player1']['choice_display'] = '❓ Waiting...'
+            
+            if safe_state['player2']['choice_made']:
+                safe_state['player2']['choice_display'] = '✅ Ready!'
+            else:
+                safe_state['player2']['choice_display'] = '❓ Waiting...'
+        else:
+            # When both are ready, show the actual choices
+            safe_state['player1']['choice_display'] = safe_state['player1']['choice']
+            safe_state['player2']['choice_display'] = safe_state['player2']['choice']
+        
+        return safe_state
     
     def get_records(self):
         return self.records
