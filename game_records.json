@@ -24,6 +24,16 @@
       "match": "Johana vs Thomas",
       "winner": "Johana",
       "date": "2025-10-17T18:54:47.229863"
+    },
+    {
+      "match": "Player 1 vs Player 2",
+      "winner": "Player 2",
+      "date": "2025-10-17T20:00:37.939749"
+    },
+    {
+      "match": "Player 1 vs Player 2",
+      "winner": "Player 1",
+      "date": "2025-10-17T20:12:42.228911"
     }
   ],
   "player_vs_cpu": [],

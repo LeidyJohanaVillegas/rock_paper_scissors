@@ -169,23 +169,6 @@ class RockPaperScissors:
             'both_ready': True
         }
         
-        # Check if game should continue
-        self.game_state['current_round'] += 1
-        if self.game_state['current_round'] > self.game_state['max_rounds']:
-            round_result['game_complete'] = True
-            self.game_state['game_active'] = False
-            
-            # Save records for PvP games
-            if self.game_state['game_mode'] == 'player_vs_player':
-                winner = (self.game_state['player1']['name'] 
-                         if self.game_state['player1']['score'] > self.game_state['player2']['score'] 
-                         else self.game_state['player2']['name'])
-                self.save_record('player_vs_player', {
-                    'match': f"{self.game_state['player1']['name']} vs {self.game_state['player2']['name']}",
-                    'winner': winner,
-                    'date': datetime.now().isoformat()
-                })
-        
         # Reset choices for next round (but keep the made flags for display)
         self.game_state['player1']['choice_made'] = False
         self.game_state['player2']['choice_made'] = False
@@ -203,6 +186,28 @@ class RockPaperScissors:
                 self.challenge_for_player = loser_num
                 round_result['challenge_issued'] = True
                 # Do not end the round immediately; caller should fetch challenge
+
+        # Check if game should continue (increment round after handling challenges)
+        self.game_state['current_round'] += 1
+        if self.game_state['current_round'] > self.game_state['max_rounds']:
+            # If a challenge was just issued, postpone finalizing the game until challenge resolution
+            if round_result.get('challenge_issued'):
+                # Mark that the game should end after the challenge finishes
+                self.game_state['end_after_challenge'] = True
+                round_result['game_complete'] = False
+            else:
+                round_result['game_complete'] = True
+                self.game_state['game_active'] = False
+                # Save records for PvP games
+                if self.game_state['game_mode'] == 'player_vs_player':
+                    winner = (self.game_state['player1']['name'] 
+                             if self.game_state['player1']['score'] > self.game_state['player2']['score'] 
+                             else self.game_state['player2']['name'])
+                    self.save_record('player_vs_player', {
+                        'match': f"{self.game_state['player1']['name']} vs {self.game_state['player2']['name']}",
+                        'winner': winner,
+                        'date': datetime.now().isoformat()
+                    })
 
         return round_result
 
@@ -234,6 +239,27 @@ class RockPaperScissors:
             # If failed, award point to opponent
             opponent_num = 1 if player_number == 2 else 2
             self.game_state[f'player{opponent_num}']['score'] += 1
+
+        # If we were supposed to end the game after this challenge, finalize now
+        if self.game_state.get('end_after_challenge'):
+            self.game_state['game_active'] = False
+            # mark game complete in the returned payload
+            resp = {'passed': passed, 'game_state': self.get_game_state(), 'game_complete': True}
+
+            # Save records for PvP games if applicable
+            if self.game_state.get('game_mode') == 'player_vs_player':
+                winner = (self.game_state['player1']['name'] 
+                         if self.game_state['player1']['score'] > self.game_state['player2']['score'] 
+                         else self.game_state['player2']['name'])
+                self.save_record('player_vs_player', {
+                    'match': f"{self.game_state['player1']['name']} vs {self.game_state['player2']['name']}",
+                    'winner': winner,
+                    'date': datetime.now().isoformat()
+                })
+
+            # Clear the flag
+            self.game_state['end_after_challenge'] = False
+            return resp
 
         return {'passed': passed, 'game_state': self.get_game_state()}
     

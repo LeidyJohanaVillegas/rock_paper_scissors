@@ -76,4 +76,5 @@ def save_record():
     return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Run without debug/reload to avoid restart loops while diagnosing
+    app.run(debug=False, port=5000)

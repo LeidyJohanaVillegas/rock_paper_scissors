@@ -511,6 +511,13 @@ function handleChallengeResponse(resp) {
         updateGameDisplay();
     }
 
+    // If server indicates the game is complete after this challenge, show final results
+    if (resp.game_complete) {
+        setTimeout(() => {
+            showFinalResults();
+        }, 300);
+    }
+
     // Clear currentChallengeForPlayer so accidental resubmissions are blocked
     currentChallengeForPlayer = null;
 }
