@@ -23,6 +23,8 @@ async function apiCall(endpoint, data = null) {
 // Game State Management
 let currentGameState = null;
 let currentPlayer = 1; // Track which player is currently playing
+// Prevent overlapping server polls
+let pollingInProgress = false;
 
 // Screen Management
 function showScreen(screenId) {
@@ -220,18 +222,23 @@ async function makeChoice(choice, playerNumber) {
 
 function updateGameStateFromServer() {
     // Periodically check game state from server (optional)
-    if (currentGameState && currentGameState.game_active && !currentGameState.both_choices_made) {
-        setTimeout(async () => {
+    if (!(currentGameState && currentGameState.game_active && !currentGameState.both_choices_made)) return;
+
+    if (pollingInProgress) return;
+    pollingInProgress = true;
+
+    setTimeout(async () => {
+        try {
             const result = await apiCall('get_game_state');
             if (!result.error && result.game_mode === currentGameState.game_mode) {
                 // Only update if the game mode is the same
                 const previousState = JSON.stringify(currentGameState);
                 const newState = JSON.stringify(result);
-                
+
                 if (previousState !== newState) {
                     currentGameState = result;
                     updateGameDisplay();
-                    
+
                     // Auto-play for CPU
                     if (!currentGameState.player1.is_human && !currentGameState.player1.choice_made) {
                         setTimeout(() => makeChoice('', 1), 500);
@@ -239,17 +246,19 @@ function updateGameStateFromServer() {
                     if (!currentGameState.player2.is_human && !currentGameState.player2.choice_made) {
                         setTimeout(() => makeChoice('', 2), 1000);
                     }
+
                     // If server reports a pending challenge, fetch/show it
-                    if (currentGameState.challenge_pending) {
-                        // Only fetch if there's a specific player assigned
-                        if (currentGameState.challenge_for_player) {
-                            fetchAndShowChallenge();
-                        }
+                    if (currentGameState.challenge_pending && currentGameState.challenge_for_player) {
+                        fetchAndShowChallenge();
                     }
                 }
             }
-        }, 1000);
-    }
+        } catch (e) {
+            console.warn('Polling error', e);
+        } finally {
+            pollingInProgress = false;
+        }
+    }, 1000);
 }
 
 function showPlayerTurnMessage() {
