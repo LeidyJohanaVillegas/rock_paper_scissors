@@ -4,11 +4,25 @@ from guessTheWord import word_guess_questions
 
 def get_random_quiz_question():
     question_data = random.choice(quiz_questions)
-    # Return a shallow copy so callers don't accidentally expose the correct answer
+    opts = question_data.get('options', [])
+    mapped = {}
+    letters = ['a', 'b', 'c', 'd']
+    for i, letter in enumerate(letters):
+        try:
+            raw = opts[i]
+        except IndexError:
+            raw = ''
+        # Strip patterns like 'a) ' or 'a)'
+        if isinstance(raw, str) and ') ' in raw:
+            _, text = raw.split(') ', 1)
+        else:
+            text = raw
+        mapped[letter] = text
+
     return {
         'type': 'quiz',
         'question': question_data['question'],
-        'options': question_data['options'],
+        'options': mapped,
         'correct_answer': question_data['correct_answer']  # kept for server-side checking
     }
 

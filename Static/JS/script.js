@@ -498,11 +498,11 @@ function handleChallengeResponse(resp) {
     document.getElementById('word-challenge').classList.add('hidden');
     document.getElementById('challenge-result').classList.remove('hidden');
     if (passed) {
-        document.getElementById('challenge-result-title').textContent = '¡Bien hecho!';
-        document.getElementById('challenge-result-message').textContent = 'Has aprobado el reto y evitas que tu oponente gane el punto.';
+        document.getElementById('challenge-result-title').textContent = 'Well done!';
+        document.getElementById('challenge-result-message').textContent = 'You passed the challenge and prevented your opponent from getting the point.';
     } else {
-        document.getElementById('challenge-result-title').textContent = 'Fallaste :(';
-        document.getElementById('challenge-result-message').textContent = 'No acertaste el reto. El punto fue concedido al oponente.';
+        document.getElementById('challenge-result-title').textContent = 'You failed :(';
+        document.getElementById('challenge-result-message').textContent = 'You did not pass the challenge. The point was awarded to your opponent.';
     }
 
     // Update local game state if provided
@@ -669,7 +669,7 @@ function displayRecords(records) {
     }
 }
 
-function showTab(tabId) {
+function showTab(tabId, clickedEl) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -681,8 +681,13 @@ function showTab(tabId) {
     });
     
     // Show selected tab
-    document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
+    const tab = document.getElementById(tabId);
+    if (tab) tab.classList.add('active');
+
+    // Mark the clicked button active if provided
+    if (clickedEl && clickedEl.classList) {
+        clickedEl.classList.add('active');
+    }
 }
 
 // Initialize the game
